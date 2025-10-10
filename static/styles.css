@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,100..900&display=swap');
+*{
+    padding: 0px;
+    margin: 0px;
+    box-sizing: border-box;
+}
+
+.header{
+    font-family: "Big Shoulders", sans-serif;
+    font-weight: 900;
+    letter-spacing: -2px;
+    margin-bottom: 20px;
+}
+
+.predResult{
+    font-family: "Big Shoulders", sans-serif;
+    font-weight: 900;
+    font-size: 40px;
+    letter-spacing: -2px;
+    margin-top: 20px;
+}
