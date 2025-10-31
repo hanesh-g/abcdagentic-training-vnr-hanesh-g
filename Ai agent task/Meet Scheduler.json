@@ -1,0 +1,433 @@
+{
+  "name": "meet scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        656,
+        112
+      ],
+      "id": "a1eb2370-a13c-46ba-8414-aa9c8ce23ff7",
+      "name": "Transcribe a recording1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dUdrrHswAv2w0MAV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "id": "770fc8e4-c73b-4655-a70f-818d4a743162",
+      "name": "Download Audio1",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        416,
+        112
+      ],
+      "webhookId": "843d5959-731c-4f46-91e5-48b2004db9c1",
+      "typeVersion": 1.2,
+      "credentials": {
+        "telegramApi": {
+          "id": "hG6zjGYLF4fP48LN",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d47bc09-7b06-4248-b897-b91292c9938e",
+              "name": "text",
+              "type": "string",
+              "value": "={{ $json.message.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7099b9e7-e55a-4ba2-a11c-2f6e69c97390",
+      "name": "Text Message",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        864,
+        304
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1d47bc09-7b06-4248-b897-b91292c9938e",
+              "name": "text",
+              "type": "string",
+              "value": "={{ $json.text || $json.content.parts[0].text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ddf74c11-b031-4ea8-ad9f-231779c41d39",
+      "name": "Transcribed Audio",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        864,
+        112
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "08e57aab-c6bc-4a79-be51-3ed4824b097c",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "leftValue": "={{ $json.message.voice.mime_type }}",
+                    "rightValue": "audio"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "id": "0b1fc9e6-dd17-4489-a54f-d0eaf57fbd09",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    },
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "text"
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "text"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "78026482-4596-4863-83a9-da7a4b5cf14a",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        192,
+        208
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "id": "fe430523-7557-4b7c-a59a-ddf5fe6175f8",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "position": [
+        -32,
+        208
+      ],
+      "webhookId": "aaaeffac-416c-4e75-acf6-c6b47ef7e900",
+      "typeVersion": 1,
+      "credentials": {
+        "telegramApi": {
+          "id": "hG6zjGYLF4fP48LN",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a helpful assistant; your task is to schedule Zoom meetings. You'll receive a prompt from the user, which includes timings in full date time format \"[DateTime: 2025-09-13T16:56:58.157+02:00]\", people to add, etc, You need to output data accordingly. \n\nToday: {{ $today }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        176
+      ],
+      "id": "2aae0cad-8b7d-49f8-85d9-38ae4a9cb400",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        400
+      ],
+      "id": "aa064700-e9ce-4fde-b41d-1ac13821e7e0",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "dUdrrHswAv2w0MAV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"start_time\": \"start time\",\n    \"end_time\": \"end time\",\n\t\"candidates\": [\"abc@gmail.com\", \"xyz@gmail.com\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        416
+      ],
+      "id": "bc199596-8cf1-4cc2-82ff-3124305195f8",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "teamvmsubscriptions@gmail.com",
+          "mode": "list",
+          "cachedResultName": "teamvmsubscriptions@gmail.com"
+        },
+        "start": "={{$json.output.start_time || $now }}",
+        "end": "={{ $json.output.end_time || $now.plus(1, 'hour') }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $json.output.candidates.join(\", \") }}"
+          ],
+          "conferenceDataUi": {
+            "conferenceDataValues": {
+              "conferenceSolution": "hangoutsMeet"
+            }
+          },
+          "summary": "AI Scheduled"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        1424,
+        176
+      ],
+      "id": "0ba64319-47f4-489d-8c77-f5ffcfb75f4d",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "onos7gnfA0rz1EKs",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=Your meeting is scheduled, here is the meet link: {{ $json.conferenceData.entryPoints[0].uri }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1632,
+        176
+      ],
+      "id": "ab867612-5689-4bb6-b197-b1cb6efd4945",
+      "name": "Send a text message",
+      "webhookId": "dd94214f-eac5-43bc-993c-4e6cfa6916b7",
+      "credentials": {
+        "telegramApi": {
+          "id": "hG6zjGYLF4fP48LN",
+          "name": "Telegram account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Transcribe a recording1": {
+      "main": [
+        [
+          {
+            "node": "Transcribed Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Audio1": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Download Audio1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Text Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribed Audio": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Message": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1718d2f4-a1a6-43ea-89a9-d747b2863767",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f385dc9c06f04aef97882961555d821ab481e3c657d18144bd8e82a7a6416136"
+  },
+  "id": "ANkr5laSGssrhEvB",
+  "tags": []
+}
