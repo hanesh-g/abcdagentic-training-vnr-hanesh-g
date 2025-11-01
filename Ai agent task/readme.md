@@ -155,15 +155,6 @@ Each operation set (date, day, news1, news2, news3) follows this pattern.
 
 ---
 
-## Handoffs Between Nodes
-
-| From                     | To                        | Data Transferred              | Purpose                  |
-| ------------------------ | ------------------------- | ----------------------------- | ------------------------ |
-| **Content Writer Agent** | **Aggregator**            | AI-generated JSON (news data) | Structuring & validation |
-| **Aggregator**           | **Sheets Node**           | Clean data                    | Long-term storage        |
-| **Sheets Node**          | **Content Creator Agent** | Old + new data                | Canva replacement        |
-
----
 
 ## Memory & Persistence
 
