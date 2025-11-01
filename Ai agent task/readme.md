@@ -4,6 +4,7 @@
 > **Automated AI-driven content update system** that scrapes daily news, enhances it using Gemini 2.5 Flash, structures it, and updates a Canva design automatically every day at 11:00 PM using Airtop’s AI browser automation tools.
 
 ---
+ppt link: https://www.canva.com/design/DAG3bpwZ_f8/Ap4yuX5NG-xwhAV25au_KQ/edit
 
 ## Overview
 
