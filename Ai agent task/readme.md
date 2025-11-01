@@ -30,6 +30,10 @@ At 11:00 PM daily, the workflow executes the following steps:
 5. **Content Creator Agent:** Opens Canva via Airtop browser automation and updates the design using find-and-replace operations.
 
 ---
+## Workflow Diagram
+
+<img width="1444" height="671" alt="image" src="https://github.com/user-attachments/assets/b9b6c58f-bda8-4c05-a22b-4a9e6c07336f" />
+
 
 ## High-Level Architecture Diagram
 
