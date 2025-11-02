@@ -1,0 +1,1333 @@
+{
+  "name": "Ultimate Carousel Editor something",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        320
+      ],
+      "id": "8cf0bae3-1e08-412a-b077-c5221522babf",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Use today's date information below to label the news summary.\n\nDate: {{ $json[\"Readable date\"].split(\",\")[0] }}\nDay: {{$json[\"Day of week\"]}}\n\nNow, research and summarize the 3 most important and interesting technology news updates from today using the available tools.\n",
+        "options": {
+          "systemMessage": "={\n  \"role\": \"system\",\n  \"content\": \"You are an automated AI research and content generation agent inside an n8n workflow. You are triggered every day at exactly 11:00 PM.\\n\\n--- WORKFLOW CONTEXT ---\\n1. Your job is to find and summarize today's 3 most interesting and important technology news updates.\\n2. Use the following tools:\\n   - 'Researcher' → Use this Perplexity-based tool to fetch the latest and most credible tech news of the day.\\n   - 'Refiner' → Use this Gemini Flash 2.5 model to clean, shorten, and reformat the raw text from the Researcher tool.\\n\\n--- OUTPUT REQUIREMENTS ---\\n✅ Each news item must:\\n  - Be exactly one line long.\\n  - Contain no citations, links, or sources.\\n  - Be factual, simple, and concise.\\n  - Focus on today's date only.\\n  - Cover major updates in global tech, AI, startups, digital innovation, or space tech.\\n\\n✅ FINAL OUTPUT FORMAT (JSON):\\n{\\n  \\\"date\\\": \\\"25-10\\\",\\n  \\\"day\\\": \\\"SAT\\\",\\n  \\\"news1\\\": \\\"One-line tech update\\\",\\n  \\\"news2\\\": \\\"One-line tech update\\\", \\n  \\\"news3\\\": \\\"One-line tech update\\\"\\n}\\n\\n--- NOTES ---\\n- Do not include titles, headlines, or extra commentary in news items.\\n- The output must be valid JSON format.\\n- Always ensure the content is current and relevant to today's date.\\n\\nYour workflow goal: Research → Refine → Generate news summary\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        464,
+        320
+      ],
+      "id": "a98f2c35-b59c-46dc-ade8-99aac4b8a2a5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "messages": {
+          "message": [
+            {
+              "content": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('message0_Text', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {
+          "searchRecency": "day"
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.perplexityTool",
+      "typeVersion": 1,
+      "position": [
+        656,
+        624
+      ],
+      "id": "aa1adb54-cf1b-4d6b-9fd4-39e841333448",
+      "name": "Researcher",
+      "credentials": {
+        "perplexityApi": {
+          "id": "qVOdSnXDdIrZ4RL0",
+          "name": "Perplexity account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        400,
+        624
+      ],
+      "id": "ff972b03-69d5-4831-9135-27999fce1e25",
+      "name": "Refiner",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "D6LwtMV0Rqgu9iMj",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ Read the raw output safely from the AI node\nlet rawOutput = $json.output || \"\";\nlet parsed;\n\ntry {\n  // Remove markdown-style JSON fences if present (```json ... ```)\n  rawOutput = rawOutput.replace(/```json|```/g, \"\").trim();\n  parsed = JSON.parse(rawOutput);\n} catch (err) {\n  return [{\n    json: {\n      error: \"Invalid JSON format in AI output\",\n      details: err.message,\n      raw: rawOutput\n    }\n  }];\n}\n\n// ✅ Extract all required fields\nconst date = parsed.date || \"\";\nconst day = parsed.day || \"\";\nconst headline1 = parsed.news1 || \"\";\nconst headline2 = parsed.news2 || \"\";\nconst headline3 = parsed.news3 || \"\";\n\n// ✅ Prepare the clean final output\nreturn [{\n  json: {\n    Date: date,\n    Day: day,\n    Headline1: headline1,\n    Headline2: headline2,\n    Headline3: headline3,\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        784,
+        320
+      ],
+      "id": "5aee01ec-6a5c-4fb4-8871-c3a8a93e567f",
+      "name": "aggregator"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "=news_image.jpg",
+        "name": "={{ $json.Date }}_image.jpeg",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1vocQr9Zl7GbQI8omTrzIL7HURUXNqKxj",
+          "mode": "list",
+          "cachedResultName": "carousel-images",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1vocQr9Zl7GbQI8omTrzIL7HURUXNqKxj"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -48,
+        400
+      ],
+      "id": "4b2dc3a8-e1b8-49f3-b1b3-41de577b2627",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SswHM83L5lXFJHgi",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stability.ai/v2beta/stable-image/generate/sd3",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer sk-yOPqchhrNoNu0aH5PHkS3ahufnvmU16ZQpa5c0mrsxn5NFa2"
+            },
+            {
+              "name": "Accept",
+              "value": "image/*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.Image_Prompt }}"
+            },
+            {
+              "name": "model",
+              "value": "sd3.5-large"
+            },
+            {
+              "name": "output_format",
+              "value": "jpeg"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "news_image.jpg"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -48,
+        176
+      ],
+      "id": "f8d71bf4-5e4e-49f6-b74f-a2b6784a1db6",
+      "name": "imageCreator"
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiData = $items(\"aggregator\")[0]?.json || {};\nconst driveData = $json; // from Google Drive node\n\n// Get the file ID from Drive\nconst fileId = driveData.id; // this is the uploaded file's ID\nconst imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;\n\n// Combine all data for Sheets\nreturn [{\n  json: {\n    Date: aiData.Date || aiData.date || \"\",\n    Day: aiData.Day || aiData.day || \"\",\n    \"1\": aiData.Headline1 || aiData.news1 || \"\",\n    \"2\": aiData.Headline2 || aiData.news2 || \"\",\n    \"3\": aiData.Headline3 || aiData.news3 || \"\",\n    image: `=IMAGE(\"${imageUrl}\")` // this makes the image appear directly\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        400
+      ],
+      "id": "a40d0deb-f1a8-430a-9aa2-417eda759ca7",
+      "name": "Merger"
+    },
+    {
+      "parameters": {
+        "resource": "extraction",
+        "operation": "query",
+        "sessionId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Session_ID', \"The `sessionId` returned by the `Start_Browser` tool\", 'string') }}",
+        "windowId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Window_ID', \"The `windowId` returned by the `Start_Browser` tool\", 'string') }}",
+        "prompt": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt', ``, 'string') }}",
+        "additionalFields": {}
+      },
+      "id": "f7a60658-58db-45b6-a723-ca0a3e72876f",
+      "name": "Query",
+      "type": "n8n-nodes-base.airtopTool",
+      "position": [
+        1568,
+        624
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "window",
+        "operation": "load",
+        "sessionId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Session_ID', \"The `sessionId` returned by the `Start_Browser` tool\", 'string') }}",
+        "windowId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Window_ID', \"The `windowId` returned by the `Start_Browser` tool\", 'string') }}",
+        "url": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('URL', ``, 'string') }}",
+        "additionalFields": {}
+      },
+      "id": "655ad10b-b850-42c7-9242-5b40dec2df3d",
+      "name": "Load URL",
+      "type": "n8n-nodes-base.airtopTool",
+      "position": [
+        1696,
+        624
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "interaction",
+        "operation": "type",
+        "sessionId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Session_ID', \"The `sessionId` returned by the `Start_Browser` tool\", 'string') }}",
+        "windowId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Window_ID', \"The `windowId` returned by the `Start_Browser` tool\", 'string') }}",
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Text', ``, 'string') }}",
+        "pressEnterKey": true,
+        "elementDescription": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Element_Description', `Locate a text element on the Canva page that contains either a date (e.g., “26.10”), a day (e.g., “SUN”), or an editable text field with existing content (e.g., a news headline such as “Apple announces new M4 MacBook Pro…”). Select this text box, delete its current content using backspace, and type in the new content provided as input.`, 'string') }}",
+        "additionalFields": {}
+      },
+      "id": "3b9c0529-fd9b-403f-bd5e-b8e8867b58de",
+      "name": "Type",
+      "type": "n8n-nodes-base.airtopTool",
+      "position": [
+        1440,
+        624
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "profileName": "={{ $json.profile_name }}",
+        "additionalFields": {}
+      },
+      "id": "64438b28-1516-4bd7-bcba-f32c6714a277",
+      "name": "Session",
+      "type": "n8n-nodes-base.airtop",
+      "position": [
+        1120,
+        832
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "window",
+        "url": "={{ $('When Executed by Another Workflow').item.json.url }}",
+        "getLiveView": true,
+        "additionalFields": {}
+      },
+      "id": "1bb25504-95b8-4630-86b0-d6dda7cf88ef",
+      "name": "Window",
+      "type": "n8n-nodes-base.airtop",
+      "position": [
+        1312,
+        832
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0a0680af-39bd-4bc7-b9cd-84c1766c79a1",
+              "name": "sessionId",
+              "type": "string",
+              "value": "={{ $('Session').item.json.sessionId }}"
+            },
+            {
+              "id": "13940ee8-c1d4-4718-a7b4-176c44c097b7",
+              "name": "windowId",
+              "type": "string",
+              "value": "={{ $('Window').item.json.data.windowId }}"
+            },
+            {
+              "id": "a0f2005c-2cd2-4a8d-891b-a4759b72a124",
+              "name": "output",
+              "type": "string",
+              "value": "Session and window created successfully"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ed5f75ca-2fac-46fb-857d-1a12efde3204",
+      "name": "Return IDs",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1712,
+        832
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "url"
+            },
+            {
+              "name": "profile_name"
+            }
+          ]
+        }
+      },
+      "id": "809f28cc-84b4-4098-b69a-e320f71cb445",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "position": [
+        944,
+        832
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "name": "Start_Browser",
+        "description": "Start a new browser session and window",
+        "workflowId": {
+          "__rl": true,
+          "value": "2TBNJdgbwzgK7IDS",
+          "mode": "id",
+          "cachedResultUrl": "/workflow/2TBNJdgbwzgK7IDS"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "url": "https://www.canva.com/design/DAG2olfEo5o/b3eG0by8OUTkQm_rJSsIPg/edit",
+            "profile_name": "hanesh"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "profile_name",
+              "displayName": "profile_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "61644b4c-c64d-4bb3-a348-7fd8dbd3ccb0",
+      "name": "Start Browser",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "position": [
+        1184,
+        624
+      ],
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "operation": "terminate",
+        "sessionId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Session_ID', \"The `sessionId` returned by the `Start_Browser` tool\", 'string') }}"
+      },
+      "id": "e3bca15a-d671-41ae-b745-3083747017f7",
+      "name": "End Session",
+      "type": "n8n-nodes-base.airtopTool",
+      "position": [
+        1824,
+        624
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        400
+      ],
+      "id": "1c41aaef-9bbf-4500-9c7c-9d0147626683",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Perform the Canva find-and-replace automation using the following data.\n\nUse the Canva design link provided and follow the system prompt instructions.\n\nCanva Design URL:\nhttps://www.canva.com/design/DAG2olfEo5o/b3eG0by8OUTkQm_rJSsIPg/edit\n\nData Sources:\n- Old values (existing content in Canva) come from Google Sheets.\n- New values (updated content) come from the `aggregator` node output.\n\nInput Mapping:\n\nOld Data (from Sheets):\nOld Date: {{ $json.Date }}\nOld Day: {{ $json.Day }}\nOld Paragraph 1: {{ $json.news1 }}\nOld Paragraph 2: {{ $json.news2 }}\nOld Paragraph 3: {{ $json.news3 }}\n\nNew Data (from Aggregator Node):\nNew Date: {{ $('aggregator').item.json.Date }}\nNew Day: {{ $('aggregator').item.json.Day }}\nNew Paragraph 1: {{ $('aggregator').item.json.Headline1 }}\nNew Paragraph 2: {{ $('aggregator').item.json.Headline2 }}\nNew Paragraph 3: {{ $('aggregator').item.json.Headline3 }}\n\nExecution Instructions:\n- Replace all old values in Canva with the corresponding new values.\n- Follow the step-by-step process defined in the system prompt (File → Find and Replace → Replace all).\n- Process replacements in this order:\n  1. Date (Old → New)\n  2. Day (Old → New)\n  3. Paragraph 1 (Old → New)\n  4. Paragraph 2 (Old → New)\n  5. Paragraph 3 (Old → New)\n- Wait appropriate delays between actions as per the system prompt.\n- Confirm each replacement using Query.\n- After all replacements are done, reload the design once and call End_Session.",
+        "options": {
+          "systemMessage": "=# Canva Find and Replace Automation Agent\n\n## Role\nYou are an AI automation agent that controls a browser using Airtop tools and a click tool to perform find-and-replace operations in Canva designs. Execute tasks precisely, sequentially, and handle errors gracefully while continuing the workflow.\n\n## Available Tools\n\n1. Start_Browser - Always call FIRST to initialize session. Returns sessionId and windowId - include these in ALL subsequent tool calls. ONLY CALL THIS ONCE at the beginning of the entire workflow. When you call Start_Browser, capture the returned sessionId and windowId and reuse them for every subsequent tool call. Never call Start_Browser again unless you have lost the sessionId and cannot issue any further tool calls.\n\n\n2. Load_URL - Loads or reloads a URL in the browser. Parameters: sessionId, windowId, url. Wait 5 seconds after loading.\n\n3. Click - Simulates a left mouse click on specified UI elements. Parameters: sessionId, windowId, elementDescription. Use for buttons, menus, text fields, and any clickable interface elements. Wait 3 seconds after each click.\n\n4. Type - Types text into active input fields. Parameters: sessionId, windowId, elementDescription, text. The target field must be clicked/active before typing. Wait 2 seconds after typing.\n\n5. Query - Inspects the UI to verify element presence and state. Parameters: sessionId, windowId, elementDescription. Use before critical actions to confirm elements exist and to verify text is being entered in the correct field.\n\n6. End_Session - MANDATORY final call to close browser session. Parameters: sessionId. Must be called even if errors occur during execution.\n\n## Core Workflow Pattern\n\nEach find-and-replace operation follows this exact sequence:\n\nSTEP 1 - Open File Menu: Click on \"File\" button (located in top-left corner of Canva interface). Wait 3 seconds for dropdown menu to fully expand.\n\nSTEP 2 - Access Find and Replace Feature: Click on \"Find and replace text\" option in the File menu. Wait 3 seconds for the Find and Replace panel to open (appears in top-right area).\n\nSTEP 3 - Enter Search Term: Click on the text input field below the \"Find\" label. Wait 2 seconds. Use Query to verify the correct field is active. Type the search term you want to find. Wait 2 seconds. Use Query to confirm text was entered in the Find field.\n\nSTEP 4 - Enter Replacement Term: Click on the text input field below the \"Replace with\" label. Wait 2 seconds. Use Query to verify the correct field is active. Type the replacement text. Wait 2 seconds. Use Query to confirm text was entered in the Replace with field.\n\nSTEP 5 - Execute Replacement: Click the \"Replace all\" button. Wait 3 seconds for the replacement operation to complete.\n\nSTEP 6 - Refresh the Design: Call Load_URL with the same Canva design URL to refresh the page. Wait 5 seconds.\n\n## IMPORTANT CONTEXT RESET BEFORE EACH OPERATION\n\nBefore starting each new find-and-replace operation (Date, Day, Paragraph 1, Paragraph 2, Paragraph 3):\n\n1. Always re-open the \"Find and replace text\" panel fresh from the File menu — do **not** assume it is still open from the previous operation.\n2. After opening the panel, wait 3 seconds to ensure the UI is reloaded and both text fields are blank and ready.\n3. Always click into the \"Find\" field first, even if it appears already filled or focused.\n4. After clicking the \"Find\" field, wait 2 seconds, then type the search term.\n5. Only after typing in \"Find\" should you click into \"Replace with\" and type the replacement term.\n6. Never skip the \"Find\" typing step, even if the field looks unchanged.\n7. If clicking or typing into \"Find\" fails, retry once after 3 seconds.\n8. Make sure that you have properly clicked the text field below the \"Find\".\n\n## Very Very important note:\n- Use the Start_Browser tool only for once.\n- Before clicking on the \"Replace with\" text field, make sure the \"Find\" text field already contains the search term.\nIf it is empty or uncertain, click the \"Find\" field again, type the search term, wait 2 seconds, and confirm it is filled before moving to the \"Replace with\" field.\n\n## Complete Workflow Sequence\n\nThe agent will receive multiple sets of find-and-replace data. Execute the following sequence:\n\nSESSION INITIALIZATION: Call Start_Browser ONCE at the very beginning. Use the returned sessionId and windowId for ALL subsequent operations. Never call Start_Browser again.\n\nOPERATION SET 1 - Date Replacement: Receive old_date and new_date values. Execute STEP 1 through STEP 6 using these values. Old_date goes in the Find field, new_date goes in the Replace with field.\n\nOPERATION SET 2 - Day Replacement: Receive old_day and new_day values. Execute STEP 1 through STEP 6 using these values. Old_day goes in the Find field, new_day goes in the Replace with field.\n\nOPERATION SET 3 - Paragraph 1 Replacement: Receive old_paragraph_1 and new_paragraph_1 values. Execute STEP 1 through STEP 6 using these values. Old_paragraph_1 (existing content in Canva) goes in the Find field, new_paragraph_1 (new input data) goes in the Replace with field.\n\nOPERATION SET 4 - Paragraph 2 Replacement: Receive old_paragraph_2 and new_paragraph_2 values. Execute STEP 1 through STEP 6 using these values. Old_paragraph_2 (existing content in Canva) goes in the Find field, new_paragraph_2 (new input data) goes in the Replace with field.\n\nOPERATION SET 5 - Paragraph 3 Replacement: Receive old_paragraph_3 and new_paragraph_3 values. Execute STEP 1 through STEP 6 using these values. Old_paragraph_3 (existing content in Canva) goes in the Find field, new_paragraph_3 (new input data) goes in the Replace with field.\n\nSESSION CLEANUP: After ALL replacement operations are complete, call End_Session to close the browser.\n\n## Execution Rules\n\nALWAYS DO: (1) Call Start_Browser ONLY ONCE at the very beginning of the workflow. (2) Wait the specified time between each action. (3) Reload the URL after completing each find-and-replace operation. (4) Call End_Session at the end, regardless of success or failure. (5) Use Query to verify critical elements exist before interacting with them. (6) Use Query to confirm text is being entered in the correct field (Find vs Replace with) before typing. (7) Use Query after typing to verify text was entered correctly. (8) Output clear error descriptions when errors occur. (9) Continue to the next step if the intended result was achieved despite an error. (10) Document what was accomplished and what failed in your final output. (11) Process ALL replacement operations in sequence before ending the session.\n\nNEVER DO: (1) Call Start_Browser more than once. (2) Skip mandatory wait times between actions. (3) Proceed to find-and-replace if the File menu fails to open. (4) Forget to reload the page after a replace operation. (5) Skip the End_Session call under any circumstances. (6) Halt the entire workflow for non-critical errors. (7) Type in the \"Replace with\" text field without first typing in the \"Find\" text field. (8) Skip Query verification before and after typing in fields. (9) Stop the workflow before processing all replacement operations.\n\n## Error Handling Protocol\n\nIf Element Not Found: Wait 2 additional seconds and retry Query to check if element appeared. If still not found after retry, log the error and assess if workflow can continue.\n\nIf Click Action Fails: Wait 3 seconds and retry the click operation once. If second attempt fails, check if the intended result occurred anyway. If intended result achieved, continue to next step. If not achieved and step is critical, log error and call End_Session.\n\nIf Type Action Fails: Verify the field is active/focused and retry once after 2 seconds. If fails again, log error and continue if non-critical.\n\nIf Query Shows Wrong Field: If Query reveals text was entered in the wrong field, click the correct field and retype the text.\n\nIf Critical Failure: If a critical operation fails (browser crash, session lost), immediately call End_Session and output a detailed error report.\n\n## Wait Time Guidelines\n\nAfter Click: 3 seconds. After Type: 2 seconds. After Load_URL: 5 seconds. After Replace operation: 3 seconds. After Query (if failed): 2 seconds. After Query (for verification): 1 second.",
+          "maxIterations": 50,
+          "returnIntermediateSteps": false,
+          "passthroughBinaryImages": true
+        }
+      },
+      "id": "0ed87bdb-7ec2-4574-9e8a-044e5a6684da",
+      "name": "Browser Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1152,
+        320
+      ],
+      "retryOnFail": true,
+      "typeVersion": 1.8,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "content": "# Designer",
+        "height": 240,
+        "width": 392,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        240
+      ],
+      "id": "b94eb45f-d17b-46ce-bf7c-48ac3da174da",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        992,
+        624
+      ],
+      "id": "4a0ef05e-71c5-465e-9460-ae84b067c8f4",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "N2fCJv4r6jUopbjr",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/18_nY01N0Wg6mOtG3bJX4_VqqAF0u-2G8EDEx7R_2yyE/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/18_nY01N0Wg6mOtG3bJX4_VqqAF0u-2G8EDEx7R_2yyE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "live link": "={{ $json.data.liveViewUrl }}",
+            "date": "={{ $json.sessionId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "live link",
+              "displayName": "live link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        832
+      ],
+      "id": "8364a31a-8ce1-4641-a641-ccc3a82c8f8f",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pJtARymOjCsCEVIJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 176,
+        "width": 1152
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1008,
+        144
+      ],
+      "id": "42e26021-14a3-4145-8c72-72a74c7d3952",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "# content writer",
+        "height": 240,
+        "width": 328,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        416,
+        240
+      ],
+      "id": "192d131d-2967-4040-a65c-7cd8abc33f8f",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "resource": "interaction",
+        "operation": "scroll",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.airtopTool",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        384
+      ],
+      "id": "4937853c-142f-4877-90e7-ecc55e42f165",
+      "name": "Scroll on page in Airtop",
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "interaction",
+        "sessionId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Session_ID', \"The `sessionId` returned by the `Start_Browser` tool\", 'string') }}",
+        "windowId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Window_ID', \"The `windowId` returned by the `Start_Browser` tool\", 'string') }}",
+        "elementDescription": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Element_Description', `Pages Button\n\nButton labeled \"Pages\" located in the bottom-right toolbar of the Canva interface. Used to open or expand the panel that displays thumbnails of all pages in the current design.\n\nMore Options Button\n\nButton with text \"More\" or a three-dot “…” icon. Clicking it reveals additional upload sources such as Google Drive etc.\n\nGoogle Drive Option\n\nOption labeled \"Google Drive\" within the More menu that appears after clicking the three-dot icon. Used to access files stored in the connected Google Drive account.\n\nSort By Dropdown\n\nDropdown menu labeled \"Sort by\" located in the Google Drive file picker window. Used to change the sorting order of files displayed from Drive (e.g., by name, date, size).\n\nCreation Date (Newest) Option\n\nOption labeled \"Creation date (newest)\" within the Sort by dropdown menu. Selecting it sorts Drive files so that the most recently uploaded or created files appear first.\n\nFirst Image Thumbnail\n\nThe first image thumbnail displayed in the Google Drive picker window after sorting by newest. Clicking this selects and inserts the most recent generated image into the Canva design.\n\nImage Element (for Deletion)\n\nThe existing image or photo element currently visible on the Canva page. Click to select it, then either press the Delete/Backspace key or click the trash/delete icon in the floating toolbar to remove it from the design.`, 'string') }}",
+        "additionalFields": {
+          "waitForNavigation": "domcontentloaded"
+        }
+      },
+      "id": "8e770b87-48b8-4f26-b06d-2ebc219a6b57",
+      "name": "Clicker",
+      "type": "n8n-nodes-base.airtopTool",
+      "position": [
+        -960,
+        384
+      ],
+      "typeVersion": 1,
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtopApi": {
+          "id": "BbXVEdCVBG7D41sw",
+          "name": "Airtop account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to click on an element",
+        "method": "POST",
+        "url": "=https://api.airtop.ai/api/v1/sessions/{{ $fromAI('sessionId') }}/windows/{{ $fromAI('windowId') }}/click",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "elementDescription",
+              "value": "={{ $fromAI('elementDescription', `the element to click on in as much detail as possible`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        1312,
+        624
+      ],
+      "id": "60ca5271-4af6-4af2-b119-7a9335f3ee52",
+      "name": "Click",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "5XCGcW6QgrOsHpvp",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1lxIOq0PasOmCvpTSUILgOaaPOkiQkM0BIZrYG9dNZiM",
+          "mode": "list",
+          "cachedResultName": "carouselSheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lxIOq0PasOmCvpTSUILgOaaPOkiQkM0BIZrYG9dNZiM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 163949553,
+          "mode": "list",
+          "cachedResultName": "carouselSheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1lxIOq0PasOmCvpTSUILgOaaPOkiQkM0BIZrYG9dNZiM/edit#gid=163949553"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        320
+      ],
+      "id": "c9ae69fe-6022-493d-8c8b-8ecba195944a",
+      "name": "oldData",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pJtARymOjCsCEVIJ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-pro",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        400
+      ],
+      "id": "4a550604-a85b-4693-a3c6-186f39b961fb",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "D6LwtMV0Rqgu9iMj",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 192,
+        "width": 1152
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1008,
+        352
+      ],
+      "id": "674a9133-bdaf-4188-8928-381426010450",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.canva.com/rest/v1/asset-uploads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Asset-Upload-Metadata",
+              "value": "{ \"name_base64\": \"TXkgQXdlc29tZSBVcGxvYWQg8J+agA==\" }"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -944,
+        176
+      ],
+      "id": "d45e7366-0102-492f-ab66-4e5f3d9a15e8",
+      "name": "AccessTokens"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.canva.com/rest/v1/asset-uploads/{{ $('AccessTokens').item.json.job.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -720,
+        192
+      ],
+      "id": "3586fbf9-fd0a-4947-9fd3-1cae42d4d92b",
+      "name": "uploadImages"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.canva.com/v1/assets",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJraWQiOiIyMzY4ZjRhYi00N2ZiLTQwN2MtYjM5Ni00NzgxODcwMjZkN2UiLCJhbGciOiJSUzI1NiJ9.eyJqdGkiOiJoamRVdEg1RE9oUGRUM1NMc2piT25RIiwiY2xpZW50X2lkIjoiT0MtQVpBVXhJWUlJTmtCIiwiYXVkIjoiaHR0cHM6Ly93d3cuY2FudmEuY29tIiwiaWF0IjoxNzYxNjc0MjI2LCJuYmYiOjE3NjE2NzQyMjYsImV4cCI6MTc2MTY4ODYyNiwic3ViIjoib1VYamk3bzAzSE1vMkZKczR2MVlWZyIsImJyYW5kIjoib0JYamkzZElfNjZxbTFPeWh3WjNURSIsIm9yZ2FuaXphdGlvbiI6bnVsbCwic2NvcGVzIjpbImFzc2V0OnJlYWQiLCJhc3NldDp3cml0ZSIsImJyYW5kdGVtcGxhdGU6Y29udGVudDpyZWFkIiwiYnJhbmR0ZW1wbGF0ZTptZXRhOnJlYWQiLCJjb21tZW50OnJlYWQiLCJjb21tZW50OndyaXRlIiwiZGVzaWduOmNvbnRlbnQ6cmVhZCIsImRlc2lnbjpjb250ZW50OndyaXRlIiwiZGVzaWduOm1ldGE6cmVhZCIsImRlc2lnbjpwZXJtaXNzaW9uOnJlYWQiLCJkZXNpZ246cGVybWlzc2lvbjp3cml0ZSIsImZvbGRlcjpwZXJtaXNzaW9uOnJlYWQiLCJmb2xkZXI6cGVybWlzc2lvbjp3cml0ZSIsImZvbGRlcjpyZWFkIiwiZm9sZGVyOndyaXRlIiwicHJvZmlsZTpyZWFkIl0sImJ1bmRsZXMiOlsiUFJPUyJdLCJjb2RlX2lkIjoid1h3U3FibV8zdjJiRldjTjM4QWVvUSIsImFjdF9hcyI6InUiLCJhY3giOiJ1OTVZc3BVbi1NTS1fMDU5UUhIRzBFbmtESG5ZRTRkcDhZM2hhVmJhRmJoRGI5X3NuX0JkbHdkaE53OXptSk1mQWtMVmxEVm1tdFhEd2NybXhIbkprbmFZZHBISlZqT0NGZmRpZXoxbFZjek03YUtkIn0.o-tdlVCjOyc9Gk-Yq2vYd6dh8dA_zvpAJ2rK5QPvbbupebMl5P5XCUuRo0rBU0vHbWOtQV5PFM8_bsAwzVPDsOp4Il_aNVlNttnoqMHltK91kPjipXSRkuVpDTG9PajbY--6AunFhCNtb_PIN2V1kLhOev0TRP7Rh5YyUGdo3PztEq9HCpNuQ-qhxnJyshF9HQZtDMC_16aAJqh0Ns7y1TgDvnL6YF-zG1joldEhspYo_MFYyi4OsxXMChTRvMNWAjnalYZSzb31Dz9OmcY1gWWqkNYQmDm6QvscyRnqtk4F1hC5_IQgh9N1EiQ4xk6tpdZrfbLjbGis6Bl9AfFFug"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"name\": \"Daily News Image\",\n  \"url\": \"={{ $json.webContentLink }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -496,
+        176
+      ],
+      "id": "4cdab4cc-23e3-4e27-acb9-22d861b6db50",
+      "name": "getUploads"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.canva.com/rest/v1/oauth/token",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "authorization_code"
+            },
+            {
+              "name": "code_verifier",
+              "value": "i541qdcfkb4htnork0w92lnu43en99ls5a48ittv6udqgiflqon8vusojojakbq4"
+            },
+            {
+              "name": "code",
+              "value": "kp8nnroja7qnx00.opyc1p76rcbyflsxbycjqfp3ub8vzsvltpzwafy9q5l45dn5fxzhe7i7a6mg1i2t8jpsa6sebdeumkzzhicskabgevrxsssec4dvjwfvhq4gs3ugghguar0voiqpfb7axsapiojoter8v3w2s5s3st84jpv2l06h667iw241xngy9c8=vu1tnjp7sz"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -256,
+        176
+      ],
+      "id": "87ebd400-f5a7-4e60-be5f-9a08535a67a5",
+      "name": "uploadthroughURL"
+    },
+    {
+      "parameters": {
+        "content": "## Start Browser Tool",
+        "height": 208,
+        "width": 1072,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        848,
+        784
+      ],
+      "id": "b1baaae2-10a0-4fb0-8794-01414bbf5a9b",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {
+    "Merger": [
+      {
+        "json": {
+          "1": "Qualcomm launched its new AI200 and AI250 chips for data centers, aiming to enhance energy efficiency and scalability in AI inference and training.",
+          "2": "SpaceX's Starlink satellite internet saw a 50% increase in median download speeds this year, now reaching 220 Mbps after a July upgrade.",
+          "3": "Google unveiled new AI tools, including FOX Foresight and MLB's agentic system Connie, to power sports broadcasting and analysis for the 2025 World Series.",
+          "Date": "27.10",
+          "Day": "MON",
+          "image": "=IMAGE(\"https://drive.google.com/uc?export=view&id=1m8cNxXYapHZ-YjnRLqQIRcnz_T0sNZCF\")"
+        }
+      }
+    ],
+    "Upload file": [
+      {
+        "json": {
+          "kind": "drive#file",
+          "id": "1EmmCW0X5jvrETdPUhbpXJMatJ3QXRVah",
+          "name": "28.10_image.jpeg",
+          "mimeType": "image/jpeg",
+          "starred": false,
+          "trashed": false,
+          "explicitlyTrashed": false,
+          "parents": [
+            "1vocQr9Zl7GbQI8omTrzIL7HURUXNqKxj"
+          ],
+          "spaces": [
+            "drive"
+          ],
+          "version": "2",
+          "webContentLink": "https://drive.google.com/uc?id=1EmmCW0X5jvrETdPUhbpXJMatJ3QXRVah&export=download",
+          "webViewLink": "https://drive.google.com/file/d/1EmmCW0X5jvrETdPUhbpXJMatJ3QXRVah/view?usp=drivesdk",
+          "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/image/jpeg",
+          "hasThumbnail": true,
+          "thumbnailLink": "https://lh3.googleusercontent.com/drive-storage/AJQWtBNEUZw2cJznV6ckXdYEBpcDQa1-bxc_G1AgNRVAYImJ1Mdav8oJo2nIS5fw7EyKrACFgef2ayghPhYX5bzjXWAdw1-9Jn47eyBFl89gB1fA5PY=s220",
+          "thumbnailVersion": "1",
+          "viewedByMe": false,
+          "createdTime": "2025-10-28T18:03:58.876Z",
+          "modifiedTime": "2025-10-28T18:04:00.453Z",
+          "modifiedByMeTime": "2025-10-28T18:04:00.453Z",
+          "modifiedByMe": true,
+          "owners": [
+            {
+              "kind": "drive#user",
+              "displayName": "Hanesh Tech",
+              "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJ6RxT4_tAMhE6rQ_SA4p3rLeWsLhxJKqB8rYF0tuqh4sUyn7o=s64",
+              "me": true,
+              "permissionId": "15044660771590099660",
+              "emailAddress": "haneshtech@gmail.com"
+            }
+          ],
+          "lastModifyingUser": {
+            "kind": "drive#user",
+            "displayName": "Hanesh Tech",
+            "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJ6RxT4_tAMhE6rQ_SA4p3rLeWsLhxJKqB8rYF0tuqh4sUyn7o=s64",
+            "me": true,
+            "permissionId": "15044660771590099660",
+            "emailAddress": "haneshtech@gmail.com"
+          },
+          "shared": true,
+          "ownedByMe": true,
+          "downloadRestrictions": {
+            "itemDownloadRestriction": {
+              "restrictedForReaders": false,
+              "restrictedForWriters": false
+            },
+            "effectiveDownloadRestrictionWithContext": {
+              "restrictedForReaders": false,
+              "restrictedForWriters": false
+            }
+          },
+          "capabilities": {
+            "canAcceptOwnership": false,
+            "canAddChildren": false,
+            "canAddMyDriveParent": false,
+            "canChangeCopyRequiresWriterPermission": true,
+            "canChangeItemDownloadRestriction": true,
+            "canChangeSecurityUpdateEnabled": false,
+            "canChangeViewersCanCopyContent": true,
+            "canComment": true,
+            "canCopy": true,
+            "canDelete": true,
+            "canDisableInheritedPermissions": false,
+            "canDownload": true,
+            "canEdit": true,
+            "canEnableInheritedPermissions": true,
+            "canListChildren": false,
+            "canModifyContent": true,
+            "canModifyContentRestriction": true,
+            "canModifyEditorContentRestriction": true,
+            "canModifyOwnerContentRestriction": true,
+            "canModifyLabels": false,
+            "canMoveChildrenWithinDrive": false,
+            "canMoveItemIntoTeamDrive": true,
+            "canMoveItemOutOfDrive": true,
+            "canMoveItemWithinDrive": true,
+            "canReadLabels": false,
+            "canReadRevisions": true,
+            "canRemoveChildren": false,
+            "canRemoveContentRestriction": false,
+            "canRemoveMyDriveParent": true,
+            "canRename": true,
+            "canShare": true,
+            "canTrash": true,
+            "canUntrash": true
+          },
+          "viewersCanCopyContent": true,
+          "copyRequiresWriterPermission": false,
+          "writersCanShare": true,
+          "permissions": [
+            {
+              "kind": "drive#permission",
+              "id": "anyoneWithLink",
+              "type": "anyone",
+              "role": "writer",
+              "allowFileDiscovery": false
+            },
+            {
+              "kind": "drive#permission",
+              "id": "15044660771590099660",
+              "type": "user",
+              "emailAddress": "haneshtech@gmail.com",
+              "role": "owner",
+              "displayName": "haneshtech",
+              "deleted": false,
+              "pendingOwner": false
+            }
+          ],
+          "permissionIds": [
+            "anyoneWithLink",
+            "15044660771590099660"
+          ],
+          "originalFilename": "28.10_image.jpeg",
+          "fullFileExtension": "10_image.jpeg",
+          "fileExtension": "jpeg",
+          "md5Checksum": "aea7f8002f338c3f3535f7ab88d2e92a",
+          "sha1Checksum": "f0d18fe06025b91599d90a76870941822438276e",
+          "sha256Checksum": "69fff585279d64b9a6849bc5373f14c96e253e4cc20c8628ee143e6374dc362b",
+          "size": "457896",
+          "quotaBytesUsed": "457896",
+          "headRevisionId": "0ByOZxDqNePmrNHVlL1lCZHVoSkFtbXFaRHNxUll1NDkrSTRJPQ",
+          "imageMediaMetadata": {
+            "width": 1024,
+            "height": 1024,
+            "rotation": 0
+          },
+          "isAppAuthorized": true,
+          "linkShareMetadata": {
+            "securityUpdateEligible": false,
+            "securityUpdateEnabled": true
+          },
+          "inheritedPermissionsDisabled": false
+        }
+      }
+    ],
+    "Schedule Trigger": [
+      {
+        "json": {
+          "timestamp": "2025-11-01T02:59:34.792-04:00",
+          "Readable date": "November 1st 2025, 2:59:34 am",
+          "Readable time": "2:59:34 am",
+          "Day of week": "Saturday",
+          "Year": "2025",
+          "Month": "November",
+          "Day of month": "01",
+          "Hour": "02",
+          "Minute": "59",
+          "Second": "34",
+          "Timezone": "America/New_York (UTC-04:00)"
+        }
+      }
+    ],
+    "AI Agent": [
+      {
+        "json": {
+          "output": "```json\n{\n  \"date\": \"01-11\",\n  \"day\": \"SAT\",\n  \"news1\": \"Meta Connect showcased new lightweight AR smart glasses featuring photography, messaging, translation, and integrated AI capabilities.\",\n  \"news2\": \"OpenAI and AMD announced a multi-billion dollar partnership to develop a 6-gigawatt AI infrastructure powered by AMD chips.\",\n  \"news3\": \"Jio 5G users in India gained free 18-month access to the Google Gemini AI Pro plan, boosting AI adoption on mobile networks.\"\n}\n```"
+        }
+      }
+    ],
+    "aggregator": [
+      {
+        "json": {
+          "Date": "01-11",
+          "Day": "SAT",
+          "Headline1": "Meta Connect showcased new lightweight AR smart glasses featuring photography, messaging, translation, and integrated AI capabilities.",
+          "Headline2": "OpenAI and AMD announced a multi-billion dollar partnership to develop a 6-gigawatt AI infrastructure powered by AMD chips.",
+          "Headline3": "Jio 5G users in India gained free 18-month access to the Google Gemini AI Pro plan, boosting AI adoption on mobile networks."
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Researcher": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refiner": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "aggregator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "aggregator": {
+      "main": [
+        [
+          {
+            "node": "oldData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        []
+      ]
+    },
+    "imageCreator": {
+      "main": [
+        []
+      ]
+    },
+    "Merger": {
+      "main": [
+        []
+      ]
+    },
+    "Type": {
+      "ai_tool": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query": {
+      "ai_tool": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Session": {
+      "main": [
+        [
+          {
+            "node": "Window",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load URL": {
+      "ai_tool": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Browser": {
+      "ai_tool": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "End Session": {
+      "ai_tool": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Return IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scroll on page in Airtop": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Clicker": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Click": {
+      "ai_tool": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "oldData": {
+      "main": [
+        [
+          {
+            "node": "Browser Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "AccessTokens": {
+      "main": [
+        []
+      ]
+    },
+    "uploadImages": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "83c06942-95f0-4778-bb9f-a91dd0a5bcd9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5802a638e907b920380e3ad6351f35c4ecace7ccfba5e3f1f9042e1c8d2831d1"
+  },
+  "id": "pEOHsxo0nxnn7Pjl",
+  "tags": []
+}
