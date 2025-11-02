@@ -214,6 +214,7 @@ flowchart LR
 * Scalable, modular, and reusable across multiple Canva templates.
 
 ---
+video url of workflow: https://drive.google.com/file/d/13jLw8PiQU2cBCS72r2tbEChkBUJwom9t/view?usp=drive_link
 
 ## Future Enhancements
 
